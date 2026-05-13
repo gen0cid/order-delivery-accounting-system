@@ -1,0 +1,7 @@
+ALTER TABLE orders
+DROP COLUMN IF EXISTS current_lat,
+DROP COLUMN IF EXISTS current_lon;
+
+ALTER TABLE couriers
+DROP COLUMN IF EXISTS current_lat,
+DROP COLUMN IF EXISTS current_lon;
