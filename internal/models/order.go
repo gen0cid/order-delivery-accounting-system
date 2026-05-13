@@ -24,9 +24,11 @@ type Order struct {
 	ID              uuid.UUID   `json:"id" db:"id"`
 	CustomerName    string      `json:"customer_name" db:"customer_name"`
 	CustomerPhone   string      `json:"customer_phone" db:"customer_phone"`
+	PickupAddress   string      `json:"pickup_address" db:"pickup_address"`
 	DeliveryAddress string      `json:"delivery_address" db:"delivery_address"`
 	Items           []OrderItem `json:"items"`
 	TotalAmount     float64     `json:"total_amount" db:"total_amount"`
+	DeliveryCost    float64     `json:"delivery_cost" db:"delivery_cost"`
 	Status          OrderStatus `json:"status" db:"status"`
 	CourierID       *uuid.UUID  `json:"courier_id,omitempty" db:"courier_id"`
 	CreatedAt       time.Time   `json:"created_at" db:"created_at"`
@@ -34,6 +36,9 @@ type Order struct {
 	DeliveredAt     *time.Time  `json:"delivered_at,omitempty" db:"delivered_at"`
 	CurrentLat      float64     `json:"current_lat" db:"current_lat"`
 	CurrentLon      float64     `json:"current_lon" db:"current_lon"`
+
+	PickupLat float64 `json:"pickup_lat" db:"pickup_lat"`
+	PickupLon float64 `json:"pickup_lon" db:"pickup_lon"`
 }
 
 // OrderItem представляет товар в заказе
@@ -53,6 +58,8 @@ type CreateOrderRequest struct {
 	Items           []CreateOrderItemRequest `json:"items"`
 	CurrentLat      float64                  `json:"current_lat" db:"current_lat"`
 	CurrentLon      float64                  `json:"current_lon" db:"current_lon"`
+
+	PickupAddress string `json:"pickup_address" db:"pickup_address"`
 }
 
 // CreateOrderItemRequest представляет запрос на создание товара в заказе

@@ -59,11 +59,13 @@ func main() {
 	// Инициализация сервисов
 	orderService := services.NewOrderService(db, log)
 	courierService := services.NewCourierService(db, log)
+	pathFinder := services.NewPathFinder(db, log)
 
 	// Инициализация handlers
 	orderHandler := handlers.NewOrderHandler(orderService, producer, redisClient, log)
 	courierHandler := handlers.NewCourierHandler(courierService, producer, redisClient, log)
 	healthHandler := handlers.NewHealthHandler(db, redisClient)
+	PathFinderHandler := handlers.NewPathFinderHandler(pathFinder, producer, redisClient, log)
 
 	// Регистрация обработчиков событий Kafka
 	registerEventHandlers(consumer, log)
@@ -74,7 +76,7 @@ func main() {
 	}
 
 	// Настройка HTTP роутера
-	mux := setupRoutes(orderHandler, courierHandler, healthHandler)
+	mux := setupRoutes(orderHandler, courierHandler, healthHandler, PathFinderHandler)
 
 	// Создание HTTP сервера
 	server := &http.Server{
@@ -111,7 +113,11 @@ func main() {
 }
 
 // setupRoutes настраивает маршруты HTTP сервера
-func setupRoutes(orderHandler *handlers.OrderHandler, courierHandler *handlers.CourierHandler, healthHandler *handlers.HealthHandler) *http.ServeMux {
+func setupRoutes(
+	orderHandler *handlers.OrderHandler,
+	courierHandler *handlers.CourierHandler,
+	healthHandler *handlers.HealthHandler,
+	PathFinderHandler *handlers.PathFinderHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Health check endpoints
@@ -133,6 +139,9 @@ func setupRoutes(orderHandler *handlers.OrderHandler, courierHandler *handlers.C
 
 	// auto-assign
 	mux.HandleFunc("/api/auto-assign/", corsMiddleware(handleCourierAssignmentRoute(courierHandler)))
+
+	// delivery-Counter
+	mux.HandleFunc("/api/delivery-Counter", corsMiddleware(handleDeliveryCounterRoute(PathFinderHandler)))
 
 	return mux
 }
@@ -201,6 +210,16 @@ func handleCourierAssignmentRoute(handler *handlers.CourierHandler) http.Handler
 		switch r.Method {
 		case http.MethodPost:
 			handler.CourierAssignmentHandler(w, r)
+		default:
+			writeErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+		}
+	}
+}
+func handleDeliveryCounterRoute(handler *handlers.PathFinderHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handler.CalculateTheCostHandler(w, r)
 		default:
 			writeErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
